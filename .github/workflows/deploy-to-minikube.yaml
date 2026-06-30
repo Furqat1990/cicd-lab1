@@ -8,33 +8,28 @@ jobs:
     name: build Node.js Docker Image and deploy to minikube
     steps:
     - uses: actions/checkout@v2
+
     - name: Start minikube
       uses: medyagh/setup-minikube@master
+
     - name: Try the cluster !
       run: kubectl get pods -A
+
     - name: Build image
       run: |
           export SHELL=/bin/bash
           eval $(minikube -p minikube docker-env)
           docker build -f ./Dockerfile -t devopshint/node-app:latest .
-          docker images | grep node-app
           echo -n "verifying images:"
           docker images
-    - name: Deploy to minikube
-      run:
-        kubectl apply -f k8s-node-app.yaml
 
-    - name: POD HOLATINI TEKSHIRISH
-      if: always()
+    - name: Deploy to minikube
+      run: kubectl apply -f k8s-node-app.yaml
+
+    - name: Wait for pod to be ready
       run: |
-          echo "===== waiting 15 sec ====="
           sleep 15
-          echo "===== PODS ====="
-          kubectl get pods -o wide
-          echo "===== DESCRIBE ====="
-          kubectl describe pods -l app=nodejs-app
-          echo "===== POD LOGS ====="
-          kubectl logs -l app=nodejs-app --tail=30 || echo "no logs"
+          kubectl wait --for=condition=ready pod -l app=nodejs-app --timeout=90s
 
     - name: Test service URLs
       run: |
