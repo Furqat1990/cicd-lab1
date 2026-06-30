@@ -23,6 +23,19 @@ jobs:
     - name: Deploy to minikube
       run:
         kubectl apply -f k8s-node-app.yaml
+
+    - name: POD HOLATINI TEKSHIRISH
+      if: always()
+      run: |
+          echo "===== waiting 15 sec ====="
+          sleep 15
+          echo "===== PODS ====="
+          kubectl get pods -o wide
+          echo "===== DESCRIBE ====="
+          kubectl describe pods -l app=nodejs-app
+          echo "===== POD LOGS ====="
+          kubectl logs -l app=nodejs-app --tail=30 || echo "no logs"
+
     - name: Test service URLs
       run: |
           minikube service list
